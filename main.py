@@ -22,18 +22,17 @@ st.subheader("Información del dataset")
 buffer = df.info(memory_usage='deep')
 st.text(buffer)
 
-# Análisis de valores nulos
-st.subheader("Valores nulos en el dataset")
-missing_values = df.isnull().sum()
-st.write(missing_values[missing_values > 0])
-
 # Definición de columnas
 columnas = {
-    "ESPECIE": "ESPECIE",
-    "VOLUMEN M3": "VOLUMEN M3",
+    "AÑO": "AÑO",
+    "SEMESTRE": "SEMESTRE",
+    "TRIMESTRE": "TRIMESTRE",
     "DPTO": "DPTO",
     "MUNICIPIO": "MUNICIPIO",
-    "FECHA": "FECHA"
+    "ESPECIE": "ESPECIE",
+    "TIPO PRODUCTO": "TIPO PRODUCTO",
+    "FUENTE": "FUENTE",
+    "VOLUMEN M3": "VOLUMEN M3"
 }
 
 # Funciones para el análisis
@@ -41,26 +40,31 @@ def analisis_especies_nacionales(df, col_especie, col_volumen):
     return df.groupby(col_especie)[col_volumen].sum().sort_values(ascending=False)
 
 def grafico_barras(data, xlabel, ylabel):
-    fig, ax = plt.subplots()
-    sns.barplot(x=data.values, y=data.index, ax=ax)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(x=data.values, y=data.index, ax=ax, palette="viridis")
     ax.set(xlabel=xlabel, ylabel=ylabel)
+    ax.set_title(f'Top 10 {ylabel}', fontsize=16)
     st.pyplot(fig)
 
 def mapa_calor(data, xlabel, ylabel):
-    fig, ax = plt.subplots()
-    sns.heatmap(data.to_frame(), cmap="YlGnBu", ax=ax)
+    fig, ax = plt.subplots(figsize=(12, 8))
+    sns.heatmap(data.to_frame(), cmap="YlGnBu", ax=ax, annot=True, fmt=".1f")
+    ax.set(xlabel=xlabel, ylabel=ylabel)
+    ax.set_title(f'Mapa de Calor: {ylabel}', fontsize=16)
     st.pyplot(fig)
 
 def grafico_lineas(data, x, y, hue, xlabel, ylabel):
-    fig, ax = plt.subplots()
-    sns.lineplot(data=data, x=x, y=y, hue=hue, ax=ax)
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.lineplot(data=data, x=x, y=y, hue=hue, ax=ax, palette="husl")
     ax.set(xlabel=xlabel, ylabel=ylabel)
+    ax.set_title(f'Evolución Temporal del Volumen Movilizado por {hue}', fontsize=16)
     st.pyplot(fig)
 
 def analisis_outliers(df, col_volumen):
-    fig, ax = plt.subplots()
-    sns.boxplot(x=df[col_volumen], ax=ax)
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.boxplot(x=df[col_volumen], ax=ax, palette="coolwarm")
     ax.set(xlabel='Volumen (m³)')
+    ax.set_title('Análisis de Outliers', fontsize=16)
     st.pyplot(fig)
 
 # Ejecución de análisis
@@ -78,8 +82,8 @@ try:
     st.subheader("Municipios con mayor movilización de madera")
     st.write(volumen_por_municipio.head(10))
 
-    df[columnas["FECHA"]] = pd.to_datetime(df[columnas["FECHA"]])
-    evolucion_temporal = df.groupby([df[columnas["FECHA"]].dt.year, columnas["ESPECIE"]])[columnas["VOLUMEN M3"]].sum().reset_index()
+    df[columnas["AÑO"]] = pd.to_datetime(df[columnas["AÑO"]], format='%Y')
+    evolucion_temporal = df.groupby([df[columnas["AÑO"]].dt.year, columnas["ESPECIE"]])[columnas["VOLUMEN M3"]].sum().reset_index()
     st.subheader("Evolución temporal del volumen movilizado por especie")
     grafico_lineas(evolucion_temporal, evolucion_temporal.columns[0], columnas["VOLUMEN M3"], columnas["ESPECIE"], 'Año', 'Volumen (m³)')
 
