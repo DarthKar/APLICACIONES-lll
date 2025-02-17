@@ -135,39 +135,6 @@ def evolucion_temporal(df):
     except Exception as e:
         st.error(f"Error al generar el gráfico de evolución temporal: {e}")
 
-# Función para realizar análisis estadístico de outliers
-def analisis_outliers(df):
-    """
-    Realiza un análisis estadístico para identificar outliers en los volúmenes de madera.
-    """
-    try:
-        # Calcular los cuartiles
-        Q1 = df['VOLUMEN M3'].quantile(0.25)
-        Q3 = df['VOLUMEN M3'].quantile(0.75)
-
-        # Calcular el rango intercuartílico (IQR)
-        IQR = Q3 - Q1
-
-        # Calcular los límites inferior y superior para identificar outliers
-        limite_inferior = Q1 - 1.5 * IQR
-        limite_superior = Q3 + 1.5 * IQR
-
-        # Filtrar los outliers
-        outliers = df[(df['VOLUMEN M3'] < limite_inferior) | (df['VOLUMEN M3'] > limite_superior)]
-
-        # Mostrar los outliers en Streamlit
-        st.subheader("Outliers en los volúmenes de madera")
-        st.write(outliers)
-
-        # Graficar los outliers usando un boxplot
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.boxplot(x=df['VOLUMEN M3'], ax=ax)
-        ax.set_title('Distribución de Volúmenes de Madera con Outliers', fontsize=16)
-        st.pyplot(fig)
-
-    except Exception as e:
-        st.error(f"Error al realizar el análisis de outliers: {e}")
-
 # Función para calcular el volumen por municipio
 def volumen_por_municipio(df):
     """
@@ -234,14 +201,12 @@ def generar_mapa_top_10_municipios(df):
         st.error(f"Error al generar el mapa: {e}")
 
 # Interfaz en Streamlit
-pagina = st.sidebar.selectbox("Selecciona una opción", ["Mapa de calor", "Análisis por especie", "Análisis de outliers", "Volumen por municipio", "Especies con menor volumen", "Municipios con mayor volumen"])
+pagina = st.sidebar.selectbox("Selecciona una opción", ["Mapa de calor", "Análisis por especie", "Volumen por municipio", "Especies con menor volumen", "Municipios con mayor volumen"])
 
 if pagina == "Mapa de calor":
     generar_mapa_calor(df)
 elif pagina == "Análisis por especie":
     grafico_especies(df)
-elif pagina == "Análisis de outliers":
-    analisis_outliers(df)
 elif pagina == "Volumen por municipio":
     volumen_por_municipio(df)
 elif pagina == "Especies con menor volumen":
