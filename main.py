@@ -26,9 +26,9 @@ missing_values = df.isnull().sum()
 st.write(missing_values[missing_values > 0])
 
 # Identificación de especies más comunes y volúmenes movilizados
-col_especie = "Nombre_Columna_Especie"  # Reemplazar con el nombre real de la columna de especies
-col_volumen = "Nombre_Columna_Volumen"  # Reemplazar con el nombre real de la columna de volumen
-col_departamento = "Nombre_Columna_Departamento"  # Reemplazar con el nombre real de la columna de departamento
+col_especie = "ESPECIE"  # Reemplazar con el nombre real de la columna de especies
+col_volumen = "VOLUMEN M3"  # Reemplazar con el nombre real de la columna de volumen
+col_departamento = "DPTO"  # Reemplazar con el nombre real de la columna de departamento
 
 if col_especie in df.columns and col_volumen in df.columns:
     especies_nacionales = df.groupby(col_especie)[col_volumen].sum().sort_values(ascending=False)
@@ -48,8 +48,3 @@ if missing_values.sum() > 0:
     st.write("Se encontraron valores nulos en el dataset. Puede ser necesario interpolar.")
 else:
     st.write("No hay valores nulos en el dataset. No es necesario interpolar.")
-
-
-st.subheader("Nombres de las columnas en el dataset")
-st.write(df.columns)
-
