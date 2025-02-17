@@ -3,6 +3,8 @@ import pandas as pd
 import geopandas as gpd
 import folium
 from streamlit_folium import folium_static
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
@@ -83,13 +85,6 @@ def grafico_lineas(data, x, y, hue, xlabel, ylabel):
     ax.set_title(f'Evolución Temporal del Volumen Movilizado por {hue}', fontsize=16)
     st.pyplot(fig)
 
-def analisis_outliers(df, col_volumen):
-    fig, ax = plt.subplots(figsize=(12, 6))
-    sns.boxplot(x=df[col_volumen], ax=ax, palette="coolwarm")
-    ax.set(xlabel='Volumen (m³)')
-    ax.set_title('Análisis de Outliers', fontsize=16)
-    st.pyplot(fig)
-
 # Ejecución de análisis
 try:
     especies_frecuencia = analisis_especies_frecuencia(df, columnas["ESPECIE"])
@@ -114,13 +109,6 @@ try:
     evolucion_temporal = df.groupby([df[columnas["AÑO"]].dt.year, columnas["ESPECIE"]])[columnas["VOLUMEN M3"]].sum().reset_index()
     st.subheader("Evolución temporal del volumen movilizado por especie")
     grafico_lineas(evolucion_temporal, evolucion_temporal.columns[0], columnas["VOLUMEN M3"], columnas["ESPECIE"], 'Año', 'Volumen (m³)')
-
-    st.subheader("Análisis de outliers")
-    analisis_outliers(df, columnas["VOLUMEN M3"])
-
-    especies_menor_volumen = especies_frecuencia.sort_values().head(10)
-    st.subheader("Especies con menor volumen movilizado")
-    st.write(especies_menor_volumen)
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
