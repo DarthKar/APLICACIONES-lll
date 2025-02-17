@@ -27,9 +27,9 @@ colombia = load_geojson()
 @st.cache_data
 def load_municipios_data():
     url = "https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/puntos_municipios.csv"
-    municipios = gpd.read_file(url)
+    municipios = pd.read_csv(url)
     municipios['geometry'] = gpd.GeoSeries.from_wkt(municipios['Geo Municipio'])
-    return municipios.set_geometry('geometry')
+    return gpd.GeoDataFrame(municipios, geometry='geometry')
 
 municipios = load_municipios_data()
 
@@ -159,18 +159,21 @@ def mapa_municipios_mayor_movilizacion(df, municipios):
         # Unir con las coordenadas de los municipios
         top_municipios_coords = top_municipios.merge(municipios, left_on='MUNICIPIO', right_on='NOM_MPIO')
 
+        # Verificar el resultado de la unión
+        st.write("Top Municipios con Coordenadas:", top_municipios_coords)
+
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
 
         # Graficar el mapa de Colombia
-        colombia.plot(ax=ax, color='white', edgecolor='black')
+        colombia.boundary.plot(ax=ax, linewidth=1, edgecolor='black')
 
         # Graficar los municipios
-        top_municipios_coords.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=50, alpha=0.7)
+        top_municipios_coords.plot(ax=ax, color='red', markersize=50, alpha=0.7)
 
         # Añadir etiquetas a los municipios
         for _, row in top_municipios_coords.iterrows():
-            ax.text(row['geometry'].x + 0.1, row['geometry'].y + 0.1, row['NOM_MPIO'], fontsize=9, ha='right')
+            ax.text(row['geometry'].x + 0.1, row['geometry'].y + 0.1, row['NOM_MPIO'], fontsize=9, ha='right', color='black')
 
         # Establecer el título y las etiquetas
         ax.set_title("Municipios con Mayor Movilización de Madera", fontsize=16)
