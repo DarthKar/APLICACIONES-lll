@@ -152,47 +152,75 @@ def especies_menor_volumen(df):
         st.error(f"Error al identificar especies con menor volumen: {e}")
 
 # Función para visualizar los municipios con mayor movilización de madera
-# Función para visualizar los municipios con mayor movilización de madera
-def mapa_municipios_mayor_movilizacion(df, municipios):
+def generar_mapa_top_10_municipios(df):
     """
-    Visualiza en un mapa los diez municipios con mayor movilización de madera, usando solo puntos.
+    Genera un mapa de Colombia con los diez municipios con mayor movilización de madera.
+
+    Args:
+    df (pd.DataFrame): DataFrame con los datos de madera.
     """
     try:
-        # Calcular el volumen total por municipio
-        volumen_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
+        # Cargar el dataset de coordenadas de los municipios
+        url_coordenadas = "https://github.com/Darkblack595/Apps_streamlit/raw/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
+        df_coordenadas = pd.read_csv(url_coordenadas)
 
-        # Convertir los nombres de los municipios a mayúsculas
-        volumen_municipio['MUNICIPIO'] = volumen_municipio['MUNICIPIO'].str.upper()
+        # Convertir los nombres de los municipios a minúsculas en ambos datasets
+        df['MUNICIPIO'] = df['MUNICIPIO'].str.lower()
+        df_coordenadas['NOM_MPIO'] = df_coordenadas['NOM_MPIO'].str.lower()
 
-        # Identificar los 10 municipios con mayor volumen
-        top_municipios = volumen_municipio.nlargest(10, 'VOLUMEN M3')
+        # Agrupar los volúmenes de madera por municipio
+        vol_por_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
 
-        # Unir con las coordenadas de los municipios
-        top_municipios_coords = top_municipios.merge(municipios, left_on='MUNICIPIO', right_on='NOM_MPIO')
+        # Ordenar y seleccionar los 10 municipios con mayor volumen
+        top_10_municipios = vol_por_municipio.sort_values(by='VOLUMEN M3', ascending=False).head(10)
+
+        # Unir los datos de los municipios con mayor volumen con las coordenadas
+        top_10_municipios = top_10_municipios.merge(
+            df_coordenadas,
+            left_on='MUNICIPIO',
+            right_on='NOM_MPIO',
+            how='inner'
+        )
+
+        # Crear un GeoDataFrame con los municipios y sus coordenadas
+        gdf = gpd.GeoDataFrame(
+            top_10_municipios,
+            geometry=gpd.points_from_xy(top_10_municipios['LONGITUD'], top_10_municipios['LATITUD'])
+        )
+
+        # Cargar el archivo GeoJSON de Colombia
+        colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
 
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
 
-        # Graficar el mapa de Colombia (solo los límites del país)
-        colombia.boundary.plot(ax=ax, linewidth=1, edgecolor='black')
+        # Graficar el mapa base de Colombia
+        colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
 
-        # Graficar los puntos de los municipios con mayor movilización
-        top_municipios_coords.plot(ax=ax, color='red', markersize=50, alpha=0.7, marker='o', legend=True)
+        # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
+        gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k')
 
-        # Añadir etiquetas a los municipios
-        for _, row in top_municipios_coords.iterrows():
-            ax.text(row['geometry'].x + 0.1, row['geometry'].y + 0.1, row['NOM_MPIO'], fontsize=9, ha='right', color='black')
+        # Añadir etiquetas con el nombre del municipio (sin el volumen)
+        for idx, row in gdf.iterrows():
+            ax.text(
+                x=row['LONGITUD'],
+                y=row['LATITUD'],
+                s=row['MUNICIPIO'].title(),
+                fontsize=6,
+                ha='center',
+                va='center',
+                color='black',
+                bbox=dict(facecolor='white', alpha=0.0, edgecolor='none')
+            )
 
-        # Establecer el título y las etiquetas
-        ax.set_title("Municipios con Mayor Movilización de Madera", fontsize=16)
-        ax.set_xlabel("Longitud")
-        ax.set_ylabel("Latitud")
+        # Establecer el título
+        ax.set_title("Top 10 Municipios con Mayor Movilización de Madera")
 
-        # Mostrar el mapa en Streamlit
+        # Mostrar el gráfico en Streamlit
         st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"Error al generar el mapa de municipios: {e}")
+        st.error(f"Error al generar el mapa de los municipios: {e}")
 
 
 
