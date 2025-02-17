@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from shapely.geometry import Point
 
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
@@ -157,16 +158,22 @@ def mapa_municipios_mayor_movilizacion(df, municipios_df):
         # Unir con las coordenadas de los municipios
         top_municipios_coords = top_municipios.merge(municipios_df, left_on='MUNICIPIO', right_on='NOM_MPIO')
 
+        # Crear un GeoDataFrame con los puntos de los municipios
+        geometry = [Point(xy) for xy in zip(top_municipios_coords['LONGITUD'], top_municipios_coords['LATITUD'])]
+        gdf_municipios = gpd.GeoDataFrame(top_municipios_coords, geometry=geometry)
+
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
 
+        # Graficar el mapa de Colombia
+        gdf.boundary.plot(ax=ax, linewidth=1, edgecolor='black')
+
         # Graficar los municipios
-        ax.scatter(top_municipios_coords['LONGITUD'], top_municipios_coords['LATITUD'],
-                   c=top_municipios_coords['VOLUMEN M3'], cmap='OrRd', s=100, edgecolor='k', linewidth=1)
+        gdf_municipios.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=50, edgecolor='k')
 
         # Añadir etiquetas a los municipios
-        for _, row in top_municipios_coords.iterrows():
-            ax.text(row['LONGITUD'], row['LATITUD'], row['NOM_MPIO'], fontsize=9, ha='right')
+        for _, row in gdf_municipios.iterrows():
+            ax.text(row['geometry'].x, row['geometry'].y, row['NOM_MPIO'], fontsize=9, ha='right')
 
         # Establecer el título y las etiquetas
         ax.set_title("Municipios con Mayor Movilización de Madera", fontsize=16)
