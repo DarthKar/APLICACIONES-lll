@@ -54,7 +54,7 @@ def mapa_calor_departamentos(gdf, df, col_departamento, col_volumen):
     volumen_por_departamento = df.groupby(col_departamento)[col_volumen].sum()
 
     # Unir el GeoDataFrame con los datos de volumen
-    gdf = gdf.set_index('DPTO_CCDGO')  # Asegúrate de que 'DPTO_CCDGO' es la columna correcta en tu GeoDataFrame
+    gdf = gdf.set_index('DPTO')  # Asegúrate de que 'DPTO' es la columna correcta en tu GeoDataFrame
     gdf['VOLUMEN M3'] = volumen_por_departamento
     gdf['VOLUMEN M3'] = gdf['VOLUMEN M3'].fillna(0)
 
@@ -66,8 +66,8 @@ def mapa_calor_departamentos(gdf, df, col_departamento, col_volumen):
         geo_data=gdf,
         name="choropleth",
         data=gdf,
-        columns=["DPTO_CCDGO", "VOLUMEN M3"],
-        key_on="feature.properties.DPTO_CCDGO",
+        columns=["DPTO", "VOLUMEN M3"],
+        key_on="feature.properties.DPTO",
         fill_color="YlGnBu",
         fill_opacity=0.7,
         line_opacity=0.5,
