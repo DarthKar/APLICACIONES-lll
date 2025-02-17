@@ -156,8 +156,6 @@ try:
 
     # Volumen total por municipio
     volumen_por_municipio(df)
-
-    # Especies con menor volumen movilizado
     especies_menor_volumen(df)
 
 except KeyError as e:
