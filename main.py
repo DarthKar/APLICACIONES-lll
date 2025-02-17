@@ -105,17 +105,13 @@ def evolucion_temporal(df):
     Genera un gráfico de la evolución temporal del volumen de madera por especie y tipo de producto.
     """
     try:
-        # Obtener la lista de especies disponibles
+        # Obtener la lista de especies y tipos de producto disponibles
         especies = df['ESPECIE'].unique()
+        tipos_producto = df['TIPO PRODUCTO'].unique()
 
-        # Crear un selector para elegir la especie
+        # Crear selectores para elegir especie y tipo de producto
         especie_seleccionada = st.selectbox('Selecciona la especie para analizar su evolución temporal', especies)
-
-        # Filtrar los tipos de producto disponibles para la especie seleccionada
-        tipos_producto_disponibles = df[df['ESPECIE'] == especie_seleccionada]['TIPO PRODUCTO'].unique()
-
-        # Crear un selector para elegir el tipo de producto, basado en los tipos de producto disponibles para la especie
-        tipo_producto_seleccionado = st.selectbox('Selecciona el tipo de producto', tipos_producto_disponibles)
+        tipo_producto_seleccionado = st.selectbox('Selecciona el tipo de producto', tipos_producto)
 
         # Filtrar el DataFrame por la especie y tipo de producto seleccionados
         df_filtrado = df[(df['ESPECIE'] == especie_seleccionada) & (df['TIPO PRODUCTO'] == tipo_producto_seleccionado)]
@@ -134,6 +130,19 @@ def evolucion_temporal(df):
 
     except Exception as e:
         st.error(f"Error al generar el gráfico de evolución temporal: {e}")
+
+# Función para identificar outliers
+def analisis_outliers(df):
+    """
+    Genera un boxplot para identificar outliers en los volúmenes de madera.
+    """
+    try:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.boxplot(x=df['VOLUMEN M3'], ax=ax)
+        ax.set_title('Distribución de Volúmenes de Madera', fontsize=16)
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Error al generar el análisis de outliers: {e}")
 
 # Función para calcular el volumen por municipio
 def volumen_por_municipio(df):
@@ -163,6 +172,8 @@ def especies_menor_volumen(df):
 def generar_mapa_top_10_municipios(df):
     """
     Genera un mapa de Colombia con los diez municipios con mayor movilización de madera.
+    Args:
+    df (pd.DataFrame): DataFrame con los datos de madera.
     """
     try:
         # Cargar el dataset de coordenadas de los municipios
@@ -184,32 +195,84 @@ def generar_mapa_top_10_municipios(df):
             df_coordenadas,
             left_on='MUNICIPIO',
             right_on='NOM_MPIO',
-            how='left'
+            how='inner'
         )
 
-        # Crear un GeoDataFrame de los municipios top 10
-        top_10_geo = gpd.GeoDataFrame(top_10_municipios, geometry=gpd.GeoSeries.from_wkt(top_10_municipios['Geo Municipio']))
+        # Crear un GeoDataFrame con los municipios y sus coordenadas
+        gdf = gpd.GeoDataFrame(
+            top_10_municipios,
+            geometry=gpd.points_from_xy(top_10_municipios['LONGITUD'], top_10_municipios['LATITUD'])
+        )
 
-        # Mostrar el mapa
+        # Cargar el archivo GeoJSON de Colombia
+        colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
+
+        # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
-        colombia.plot(ax=ax, color='lightgrey')
-        top_10_geo.plot(ax=ax, color='red', markersize=50)
-        ax.set_title("Top 10 Municipios con Mayor Movilización de Madera", fontsize=16)
+
+        # Graficar el mapa base de Colombia
+        colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
+
+        # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
+        gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k')
+
+        # Añadir etiquetas con el nombre del municipio (sin el volumen)
+        for idx, row in gdf.iterrows():
+            ax.text(
+                x=row['LONGITUD'],
+                y=row['LATITUD'],
+                s=row['MUNICIPIO'].title(),
+                fontsize=6,
+                ha='center',
+                va='center',
+                color='black',
+                bbox=dict(facecolor='white', alpha=0.0, edgecolor='none')
+            )
+
+        # Establecer el título
+        ax.set_title("Top 10 Municipios con Mayor Movilización de Madera")
+
+        # Mostrar el gráfico en Streamlit
         st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"Error al generar el mapa: {e}")
+        st.error(f"Error al generar el mapa de los municipios: {e}")
 
-# Interfaz en Streamlit
-pagina = st.sidebar.selectbox("Selecciona una opción", ["Mapa de calor", "Análisis por especie", "Volumen por municipio", "Especies con menor volumen", "Municipios con mayor volumen"])
 
-if pagina == "Mapa de calor":
+
+# Ejecución de análisis
+try:
+    # Mapa de calor por departamento
+    st.subheader("Mapa de Calor: Distribución de Volúmenes por Departamento")
     generar_mapa_calor(df)
-elif pagina == "Análisis por especie":
+
+    # Gráfico de especies más comunes
+    st.subheader("Especies más comunes a nivel nacional (por frecuencia)")
     grafico_especies(df)
-elif pagina == "Volumen por municipio":
+
+    # Gráfico de especies con mayor volumen movilizado
+    st.subheader("Especies con Mayor Volumen Movilizado")
+    grafico_volumen_especies(df)
+
+    # Evolución temporal del volumen de madera
+    st.subheader("Evolución Temporal del Volumen de Madera por Especie")
+    evolucion_temporal(df)
+
+    # Análisis de outliers
+    st.subheader("Análisis de Outliers en Volúmenes de Madera")
+    analisis_outliers(df)
+
+    # Volumen total por municipio
     volumen_por_municipio(df)
-elif pagina == "Especies con menor volumen":
+
+    # Especies con menor volumen movilizado
     especies_menor_volumen(df)
-elif pagina == "Municipios con mayor volumen":
+
+    # Mapa de municipios con mayor movilización de madera
+    st.subheader("Municipios con Mayor Movilización de Madera")
     generar_mapa_top_10_municipios(df)
+
+except KeyError as e:
+    st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
+except Exception as e:
+    st.error(f"Error inesperado: {e}")
