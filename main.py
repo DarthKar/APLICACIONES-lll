@@ -166,7 +166,7 @@ def mapa_municipios_mayor_movilizacion(df, municipios):
         colombia.plot(ax=ax, color='white', edgecolor='black')
 
         # Graficar los municipios
-        top_municipios_coords.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=50, edgecolor='k', alpha=0.7)
+        top_municipios_coords.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=50, alpha=0.7)
 
         # Añadir etiquetas a los municipios
         for _, row in top_municipios_coords.iterrows():
