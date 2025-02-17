@@ -36,8 +36,8 @@ columnas = {
 }
 
 # Funciones para el análisis
-def analisis_especies_nacionales(df, col_especie, col_volumen):
-    return df.groupby(col_especie)[col_volumen].sum().sort_values(ascending=False)
+def analisis_especies_frecuencia(df, col_especie):
+    return df[col_especie].value_counts()
 
 def grafico_barras(data, xlabel, ylabel):
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -71,10 +71,10 @@ def analisis_outliers(df, col_volumen):
 
 # Ejecución de análisis
 try:
-    especies_nacionales = analisis_especies_nacionales(df, columnas["ESPECIE"], columnas["VOLUMEN M3"])
-    st.subheader("Especies más comunes a nivel nacional")
-    st.write(especies_nacionales.head(10))
-    grafico_barras(especies_nacionales.head(10), 'Volumen (m³)', 'Especie')
+    especies_frecuencia = analisis_especies_frecuencia(df, columnas["ESPECIE"])
+    st.subheader("Especies más comunes a nivel nacional (por frecuencia)")
+    st.write(especies_frecuencia.head(10))
+    grafico_barras(especies_frecuencia.head(10), 'Frecuencia', 'Especie')
 
     # Crear una tabla pivote para el mapa de calor
     pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], aggfunc='sum', fill_value=0)
@@ -93,7 +93,7 @@ try:
     st.subheader("Análisis de outliers")
     analisis_outliers(df, columnas["VOLUMEN M3"])
 
-    especies_menor_volumen = especies_nacionales.sort_values().head(10)
+    especies_menor_volumen = especies_frecuencia.sort_values().head(10)
     st.subheader("Especies con menor volumen movilizado")
     st.write(especies_menor_volumen)
 
