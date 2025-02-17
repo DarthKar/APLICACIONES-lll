@@ -152,6 +152,7 @@ def especies_menor_volumen(df):
         st.error(f"Error al identificar especies con menor volumen: {e}")
 
 # Función para visualizar los municipios con mayor movilización de madera
+# Función para visualizar los municipios con mayor movilización de madera
 def mapa_municipios_mayor_movilizacion(df, municipios):
     """
     Visualiza en un mapa los diez municipios con mayor movilización de madera.
@@ -175,11 +176,11 @@ def mapa_municipios_mayor_movilizacion(df, municipios):
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
 
-        # Graficar el mapa de Colombia
+        # Graficar el mapa de Colombia (solo los límites del país)
         colombia.boundary.plot(ax=ax, linewidth=1, edgecolor='black')
 
-        # Graficar los municipios
-        top_municipios_coords.plot(ax=ax, color='red', markersize=50, alpha=0.7)
+        # Graficar los puntos de los municipios con mayor movilización
+        top_municipios_coords.plot(ax=ax, color='red', markersize=50, alpha=0.7, marker='o')
 
         # Añadir etiquetas a los municipios
         for _, row in top_municipios_coords.iterrows():
@@ -195,6 +196,7 @@ def mapa_municipios_mayor_movilizacion(df, municipios):
 
     except Exception as e:
         st.error(f"Error al generar el mapa de municipios: {e}")
+
 
 # Ejecución de análisis
 try:
