@@ -169,11 +169,11 @@ def mapa_municipios_mayor_movilizacion(df, municipios_df):
         gdf.boundary.plot(ax=ax, linewidth=1, edgecolor='black')
 
         # Graficar los municipios
-        gdf_municipios.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=50, edgecolor='k')
+        gdf_municipios.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=100, edgecolor='k', alpha=0.7)
 
         # Añadir etiquetas a los municipios
         for _, row in gdf_municipios.iterrows():
-            ax.text(row['geometry'].x, row['geometry'].y, row['NOM_MPIO'], fontsize=9, ha='right')
+            ax.text(row['geometry'].x + 0.1, row['geometry'].y + 0.1, row['NOM_MPIO'], fontsize=9, ha='right')
 
         # Establecer el título y las etiquetas
         ax.set_title("Municipios con Mayor Movilización de Madera", fontsize=16)
