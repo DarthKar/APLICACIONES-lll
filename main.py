@@ -24,20 +24,20 @@ def load_geojson():
 gdf = load_geojson()
 
 # Función para generar el mapa de calor
-def mapa_calor(df):
-    """
-    Genera un mapa de calor de volúmenes de madera por departamento.
-    """
-    try:
-        vol_por_dpto = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
-        df_geo = gdf.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
+def generar_mapa_calor(df):
+    """Genera un mapa de calor de volúmenes de madera por departamento."""
+    df['DPTO'] = df['DPTO'].str.upper()
+    # Cargar el archivo GeoJSON de Colombia
+    colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
 
-        fig, ax = plt.subplots(figsize=(10, 8))
-        df_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
-        ax.set_title("Distribución de volúmenes de madera por departamento", fontsize=16)
-        st.pyplot(fig)
-    except Exception as e:
-        st.error(f"Error al generar el mapa de calor: {e}")
+# Crear la figura y el eje
+    fig, ax = plt.subplots()
+
+# Agrupar los volúmenes de madera por departamento
+    vol_por_dpto = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+
+# Unir los datos de volumen con el GeoDataFrame
+    df_geo = colombia.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
 
 # Función para graficar las especies más comunes
 def grafico_especies(df):
