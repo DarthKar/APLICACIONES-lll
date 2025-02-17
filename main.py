@@ -158,9 +158,17 @@ def mapa_municipios_mayor_movilizacion(df, municipios_df):
         # Unir con las coordenadas de los municipios
         top_municipios_coords = top_municipios.merge(municipios_df, left_on='MUNICIPIO', right_on='NOM_MPIO')
 
+        # Verificar el resultado de la unión
+        st.write("Top Municipios con Coordenadas:", top_municipios_coords)
+
         # Crear un GeoDataFrame con los puntos de los municipios
         geometry = [Point(xy) for xy in zip(top_municipios_coords['LONGITUD'], top_municipios_coords['LATITUD'])]
         gdf_municipios = gpd.GeoDataFrame(top_municipios_coords, geometry=geometry)
+
+        # Verificar si el GeoDataFrame no está vacío
+        if gdf_municipios.empty:
+            st.error("El GeoDataFrame de municipios está vacío. Verifique los datos de entrada.")
+            return
 
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
