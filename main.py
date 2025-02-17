@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from shapely.geometry import Point
 
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
@@ -28,10 +29,14 @@ colombia = load_geojson()
 def load_municipios_data():
     url = "https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/puntos_municipios.csv"
     municipios = pd.read_csv(url)
-    municipios['geometry'] = gpd.GeoSeries.from_wkt(municipios['Geo Municipio'])
+    # Convertir la columna 'Geo Municipio' a geometrías
+    municipios['geometry'] = municipios['Geo Municipio'].apply(lambda geom: Point(geom.replace('POINT (', '').replace(')', '').split()))
     return gpd.GeoDataFrame(municipios, geometry='geometry')
 
 municipios = load_municipios_data()
+
+# Verificar que el GeoDataFrame no esté vacío
+st.write("Municipios GeoDataFrame:", municipios.head())
 
 # Función para generar el mapa de calor
 def generar_mapa_calor(df):
