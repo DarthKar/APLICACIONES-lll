@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import geopandas as gpd
-import folium
-from streamlit_folium import folium_static
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
@@ -15,13 +14,13 @@ def load_data():
 
 df = load_data()
 
-# Cargar el archivo GeoJSON de los municipios de Colombia
-@st.cache_data
-def load_geojson():
-    url = "https://raw.githubusercontent.com/finiterank/mapa-colombia-js/refs/heads/master/colombia-municipios.json"
-    return gpd.read_file(url)
+# Mostrar información general del dataset
+st.subheader("Vista previa del dataset")
+st.write(df.head())
 
-gdf = load_geojson()
+st.subheader("Información del dataset")
+buffer = df.info(memory_usage='deep')
+st.text(buffer)
 
 # Definición de columnas
 columnas = {
@@ -47,26 +46,14 @@ def grafico_barras(data, xlabel, ylabel):
     ax.set_title(f'Top 10 {ylabel}', fontsize=16)
     st.pyplot(fig)
 
-def mapa_interactivo(gdf, df, col_dpto, col_volumen):
-    # Unir los datos geográficos con los datos de volumen
-    merged = gdf.set_index('NOMBRE_DPT').join(df.groupby(col_dpto)[col_volumen].sum())
-
-    # Crear el mapa con folium
-    m = folium.Map(location=[4.570868, -74.297333], zoom_start=5)
-
-    folium.Choropleth(
-        geo_data=gdf,
-        name="choropleth",
-        data=merged,
-        columns=[merged.index, col_volumen],
-        key_on="feature.properties.NOMBRE_DPT",
-        fill_color="YlGnBu",
-        fill_opacity=0.7,
-        line_opacity=0.5,
-        legend_name="Volumen (m³)"
-    ).add_to(m)
-
-    folium_static(m)
+def mapa_calor(data, xlabel, ylabel):
+    fig, ax = plt.subplots(figsize=(12, 8))
+    sns.heatmap(data, cmap="YlGnBu", ax=ax, annot=True, fmt=".1f", linewidths=.5, cbar_kws={'label': 'Volumen (m³)'})
+    ax.set(xlabel=xlabel, ylabel=ylabel)
+    ax.set_title(f'Mapa de Calor: Distribución de Volúmenes por {ylabel}', fontsize=16)
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+    st.pyplot(fig)
 
 def grafico_lineas(data, x, y, hue, xlabel, ylabel):
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -89,9 +76,10 @@ try:
     st.write(especies_frecuencia.head(10))
     grafico_barras(especies_frecuencia.head(10), 'Frecuencia', 'Especie')
 
-    # Mapa interactivo
-    st.subheader("Mapa interactivo: Distribución de volúmenes por departamento")
-    mapa_interactivo(gdf, df, columnas["DPTO"], columnas["VOLUMEN M3"])
+    # Crear una tabla pivote para el mapa de calor
+    pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], aggfunc='sum', fill_value=0)
+    st.subheader("Mapa de calor: Distribución de volúmenes por departamento")
+    mapa_calor(pivot_table, 'Departamento', 'Volumen (m³)')
 
     volumen_por_municipio = df.groupby(columnas["MUNICIPIO"])[columnas["VOLUMEN M3"]].sum().sort_values(ascending=False)
     st.subheader("Municipios con mayor movilización de madera")
