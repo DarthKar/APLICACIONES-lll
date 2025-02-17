@@ -29,14 +29,11 @@ colombia = load_geojson()
 def load_municipios_data():
     url = "https://raw.githubusercontent.com/DarthKar/APLICACIONES-lll/refs/heads/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
     municipios = pd.read_csv(url)
-    # Convertir las columnas 'LATITUD' y 'LONGITUD' a geometrías
-    municipios['geometry'] = municipios.apply(lambda row: Point(row['LONGITUD'], row['LATITUD']), axis=1)
+    # Convertir la columna 'Geo Municipio' a geometrías
+    municipios['geometry'] = gpd.GeoSeries.from_wkt(municipios['Geo Municipio'])
     return gpd.GeoDataFrame(municipios, geometry='geometry')
 
 municipios = load_municipios_data()
-
-# Convertir la columna 'geometry' a WKT para mostrarla en Streamlit
-municipios['geometry_wkt'] = municipios['geometry'].apply(lambda geom: geom.wkt)
 
 # Verificar que el GeoDataFrame no esté vacío
 st.write("Municipios GeoDataFrame:", municipios.head())
