@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
-import matplotlib as plt
 import folium
 from streamlit_folium import folium_static
+import matplotlib.pyplot as plt  
+import seaborn as sns  
+
 
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
