@@ -41,7 +41,7 @@ def generar_mapa_calor(df):
         fig, ax = plt.subplots(figsize=(10, 8))
 
         # Graficar el mapa de calor
-        df_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+        df_geo.plot(column='VOLUMEN M3', cmap='viridis', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
 
         # Establecer el título
         ax.set_title("Distribución de volúmenes de madera por departamento", fontsize=16)
