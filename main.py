@@ -15,10 +15,10 @@ def load_data():
 
 df = load_data()
 
-# Cargar el archivo GeoJSON de los departamentos de Colombia
+# Cargar el archivo GeoJSON de los municipios de Colombia
 @st.cache_data
 def load_geojson():
-    url = "https://raw.githubusercontent.com/juanelo-06/Colombia-geojson/master/Colombia_departamentos.geojson"
+    url = "https://raw.githubusercontent.com/finiterank/mapa-colombia-js/refs/heads/master/colombia-municipios.json"
     return gpd.read_file(url)
 
 gdf = load_geojson()
