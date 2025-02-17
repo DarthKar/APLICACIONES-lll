@@ -6,6 +6,7 @@ from streamlit_folium import folium_static
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
 
 # Cargar el dataset desde GitHub
@@ -62,7 +63,7 @@ def mapa_calor_departamentos(gdf, df, col_departamento, col_volumen):
 
     # Añadir los departamentos al mapa con un mapa de calor
     folium.Choropleth(
-        geo_data=gdf,
+        geo_data=gdf.__geo_interface__,
         name="choropleth",
         data=gdf,
         columns=["DPTO", "VOLUMEN M3"],
