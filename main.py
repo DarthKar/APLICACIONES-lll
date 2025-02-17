@@ -31,6 +31,8 @@ def load_municipios_data():
     municipios = pd.read_csv(url)
     # Convertir la columna 'Geo Municipio' a geometrías
     municipios['geometry'] = gpd.GeoSeries.from_wkt(municipios['Geo Municipio'])
+    # Convertir los nombres de los municipios a mayúsculas
+    municipios['NOM_MPIO'] = municipios['NOM_MPIO'].str.upper()
     return gpd.GeoDataFrame(municipios, geometry='geometry')
 
 municipios = load_municipios_data()
@@ -157,6 +159,9 @@ def mapa_municipios_mayor_movilizacion(df, municipios):
     try:
         # Calcular el volumen total por municipio
         volumen_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
+
+        # Convertir los nombres de los municipios a mayúsculas
+        volumen_municipio['MUNICIPIO'] = volumen_municipio['MUNICIPIO'].str.upper()
 
         # Identificar los 10 municipios con mayor volumen
         top_municipios = volumen_municipio.nlargest(10, 'VOLUMEN M3')
