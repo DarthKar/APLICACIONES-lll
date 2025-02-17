@@ -199,80 +199,28 @@ def generar_mapa_top_10_municipios(df):
         )
 
         # Crear un GeoDataFrame con los municipios y sus coordenadas
-        gdf = gpd.GeoDataFrame(
-            top_10_municipios,
-            geometry=gpd.points_from_xy(top_10_municipios['LONGITUD'], top_10_municipios['LATITUD'])
-        )
+        gdf = gpd.GeoDataFrame(top_10_municipios, geometry=gpd.points_from_xy(top_10_municipios['LONGITUD'], top_10_municipios['LATITUD']))
+        
+        # Cargar el mapa de Colombia
+        world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+        colombia = world[world.name == 'Colombia']
 
-        # Cargar el archivo GeoJSON de Colombia
-        colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
-
-        # Crear la figura y el eje
-        fig, ax = plt.subplots(figsize=(10, 8))
-
-        # Graficar el mapa base de Colombia
-        colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
-
-        # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
-        gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k')
-
-        # Añadir etiquetas con el nombre del municipio (sin el volumen)
-        for idx, row in gdf.iterrows():
-            ax.text(
-                x=row['LONGITUD'],
-                y=row['LATITUD'],
-                s=row['MUNICIPIO'].title(),
-                fontsize=6,
-                ha='center',
-                va='center',
-                color='black',
-                bbox=dict(facecolor='white', alpha=0.0, edgecolor='none')
-            )
-
-        # Establecer el título
-        ax.set_title("Top 10 Municipios con Mayor Movilización de Madera")
-
-        # Mostrar el gráfico en Streamlit
+        # Crear el mapa
+        fig, ax = plt.subplots(figsize=(12, 10))
+        colombia.plot(ax=ax, color='lightgrey')
+        gdf.plot(ax=ax, color='red', markersize=50)
+        ax.set_title('Top 10 Municipios con Mayor Volumen de Madera Movilizada', fontsize=16)
         st.pyplot(fig)
-
+        
     except Exception as e:
         st.error(f"Error al generar el mapa de los municipios: {e}")
 
-
-
-# Ejecución de análisis
-try:
-    # Mapa de calor por departamento
-    st.subheader("Mapa de Calor: Distribución de Volúmenes por Departamento")
-    generar_mapa_calor(df)
-
-    # Gráfico de especies más comunes
-    st.subheader("Especies más comunes a nivel nacional (por frecuencia)")
-    grafico_especies(df)
-
-    # Gráfico de especies con mayor volumen movilizado
-    st.subheader("Especies con Mayor Volumen Movilizado")
-    grafico_volumen_especies(df)
-
-    # Evolución temporal del volumen de madera
-    st.subheader("Evolución Temporal del Volumen de Madera por Especie")
-    evolucion_temporal(df)
-
-    # Análisis de outliers
-    st.subheader("Análisis de Outliers en Volúmenes de Madera")
-    analisis_outliers(df)
-
-    # Volumen total por municipio
-    volumen_por_municipio(df)
-
-    # Especies con menor volumen movilizado
-    especies_menor_volumen(df)
-
-    # Mapa de municipios con mayor movilización de madera
-    st.subheader("Municipios con Mayor Movilización de Madera")
-    generar_mapa_top_10_municipios(df)
-
-except KeyError as e:
-    st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
-except Exception as e:
-    st.error(f"Error inesperado: {e}")
+# Llamada a las funciones de la aplicación
+generar_mapa_calor(df)
+grafico_especies(df)
+grafico_volumen_especies(df)
+evolucion_temporal(df)
+analisis_outliers(df)
+volumen_por_municipio(df)
+especies_menor_volumen(df)
+generar_mapa_top_10_municipios(df)
