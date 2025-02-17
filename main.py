@@ -47,10 +47,10 @@ def grafico_barras(data, xlabel, ylabel):
     st.pyplot(fig)
 
 def mapa_calor(data, xlabel, ylabel):
-    fig, ax = plt.subplots(figsize=(14, 10))
+    fig, ax = plt.subplots(figsize=(16, 12))
     sns.heatmap(data, cmap="YlGnBu", ax=ax, annot=True, fmt=".1f", linewidths=.5, cbar_kws={'label': 'Volumen (m³)'})
     ax.set(xlabel=xlabel, ylabel=ylabel)
-    ax.set_title(f'Mapa de Calor: Distribución de Volúmenes por {ylabel}', fontsize=16)
+    ax.set_title(f'Mapa de Calor: Distribución de Volúmenes por {ylabel} y Especie', fontsize=16)
     plt.xticks(rotation=45, ha='right')
     plt.yticks(rotation=0)
     st.pyplot(fig)
@@ -77,9 +77,9 @@ try:
     grafico_barras(especies_nacionales.head(10), 'Volumen (m³)', 'Especie')
 
     # Crear una tabla pivote para el mapa de calor
-    pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], aggfunc='sum', fill_value=0)
-    st.subheader("Mapa de calor: Distribución de volúmenes por departamento")
-    mapa_calor(pivot_table, 'Departamento', 'Volumen (m³)')
+    pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], columns=columnas["ESPECIE"], aggfunc='sum', fill_value=0)
+    st.subheader("Mapa de calor: Distribución de volúmenes por departamento y especie")
+    mapa_calor(pivot_table, 'Especie', 'Departamento')
 
     volumen_por_municipio = df.groupby(columnas["MUNICIPIO"])[columnas["VOLUMEN M3"]].sum().sort_values(ascending=False)
     st.subheader("Municipios con mayor movilización de madera")
