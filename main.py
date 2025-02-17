@@ -3,7 +3,6 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from shapely.geometry import Point
 
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
@@ -19,18 +18,20 @@ df = load_data()
 # Cargar el archivo GeoJSON de los departamentos de Colombia
 @st.cache_data
 def load_geojson():
-    url = "https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json"
+    url = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json"
     return gpd.read_file(url)
 
-gdf = load_geojson()
+colombia = load_geojson()
 
 # Cargar el archivo CSV con las coordenadas de los municipios
 @st.cache_data
 def load_municipios_data():
-    url = "https://raw.githubusercontent.com/DarthKar/APLICACIONES-lll/refs/heads/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
-    return pd.read_csv(url)
+    url = "https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/puntos_municipios.csv"
+    municipios = gpd.read_file(url)
+    municipios['geometry'] = gpd.GeoSeries.from_wkt(municipios['Geo Municipio'])
+    return municipios.set_geometry('geometry')
 
-municipios_df = load_municipios_data()
+municipios = load_municipios_data()
 
 # Función para generar el mapa de calor
 def generar_mapa_calor(df):
@@ -44,7 +45,7 @@ def generar_mapa_calor(df):
         vol_por_dpto = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
 
         # Unir los datos de volumen con el GeoDataFrame
-        df_geo = gdf.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
+        df_geo = colombia.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
 
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -144,7 +145,7 @@ def especies_menor_volumen(df):
         st.error(f"Error al identificar especies con menor volumen: {e}")
 
 # Función para visualizar los municipios con mayor movilización de madera
-def mapa_municipios_mayor_movilizacion(df, municipios_df):
+def mapa_municipios_mayor_movilizacion(df, municipios):
     """
     Visualiza en un mapa los diez municipios con mayor movilización de madera.
     """
@@ -156,31 +157,19 @@ def mapa_municipios_mayor_movilizacion(df, municipios_df):
         top_municipios = volumen_municipio.nlargest(10, 'VOLUMEN M3')
 
         # Unir con las coordenadas de los municipios
-        top_municipios_coords = top_municipios.merge(municipios_df, left_on='MUNICIPIO', right_on='NOM_MPIO')
-
-        # Verificar el resultado de la unión
-        st.write("Top Municipios con Coordenadas:", top_municipios_coords)
-
-        # Crear un GeoDataFrame con los puntos de los municipios
-        geometry = [Point(xy) for xy in zip(top_municipios_coords['LONGITUD'], top_municipios_coords['LATITUD'])]
-        gdf_municipios = gpd.GeoDataFrame(top_municipios_coords, geometry=geometry)
-
-        # Verificar si el GeoDataFrame no está vacío
-        if gdf_municipios.empty:
-            st.error("El GeoDataFrame de municipios está vacío. Verifique los datos de entrada.")
-            return
+        top_municipios_coords = top_municipios.merge(municipios, left_on='MUNICIPIO', right_on='NOM_MPIO')
 
         # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
 
         # Graficar el mapa de Colombia
-        gdf.boundary.plot(ax=ax, linewidth=1, edgecolor='black')
+        colombia.plot(ax=ax, color='white', edgecolor='black')
 
         # Graficar los municipios
-        gdf_municipios.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=100, edgecolor='k', alpha=0.7)
+        top_municipios_coords.plot(column='VOLUMEN M3', cmap='OrRd', ax=ax, legend=True, markersize=50, edgecolor='k', alpha=0.7)
 
         # Añadir etiquetas a los municipios
-        for _, row in gdf_municipios.iterrows():
+        for _, row in top_municipios_coords.iterrows():
             ax.text(row['geometry'].x + 0.1, row['geometry'].y + 0.1, row['NOM_MPIO'], fontsize=9, ha='right')
 
         # Establecer el título y las etiquetas
@@ -224,7 +213,7 @@ try:
 
     # Mapa de municipios con mayor movilización de madera
     st.subheader("Municipios con Mayor Movilización de Madera")
-    mapa_municipios_mayor_movilizacion(df, municipios_df)
+    mapa_municipios_mayor_movilizacion(df, municipios)
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
