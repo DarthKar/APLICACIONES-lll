@@ -105,13 +105,17 @@ def evolucion_temporal(df):
     Genera un gráfico de la evolución temporal del volumen de madera por especie y tipo de producto.
     """
     try:
-        # Obtener la lista de especies y tipos de producto disponibles
+        # Obtener la lista de especies disponibles
         especies = df['ESPECIE'].unique()
-        tipos_producto = df['TIPO PRODUCTO'].unique()
 
-        # Crear selectores para elegir especie y tipo de producto
+        # Crear un selector para elegir la especie
         especie_seleccionada = st.selectbox('Selecciona la especie para analizar su evolución temporal', especies)
-        tipo_producto_seleccionado = st.selectbox('Selecciona el tipo de producto', tipos_producto)
+
+        # Filtrar los tipos de producto disponibles para la especie seleccionada
+        tipos_producto_disponibles = df[df['ESPECIE'] == especie_seleccionada]['TIPO PRODUCTO'].unique()
+
+        # Crear un selector para elegir el tipo de producto, basado en los tipos de producto disponibles para la especie
+        tipo_producto_seleccionado = st.selectbox('Selecciona el tipo de producto', tipos_producto_disponibles)
 
         # Filtrar el DataFrame por la especie y tipo de producto seleccionados
         df_filtrado = df[(df['ESPECIE'] == especie_seleccionada) & (df['TIPO PRODUCTO'] == tipo_producto_seleccionado)]
@@ -131,7 +135,6 @@ def evolucion_temporal(df):
     except Exception as e:
         st.error(f"Error al generar el gráfico de evolución temporal: {e}")
 
-# Función para identificar outliers
 def analisis_outliers(df):
     """
     Genera un boxplot para identificar outliers en los volúmenes de madera.
