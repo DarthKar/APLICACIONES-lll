@@ -35,6 +35,9 @@ def load_municipios_data():
 
 municipios = load_municipios_data()
 
+# Convertir la columna 'geometry' a WKT para mostrarla en Streamlit
+municipios['geometry_wkt'] = municipios['geometry'].apply(lambda geom: geom.wkt)
+
 # Verificar que el GeoDataFrame no esté vacío
 st.write("Municipios GeoDataFrame:", municipios.head())
 
