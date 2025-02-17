@@ -27,10 +27,10 @@ colombia = load_geojson()
 # Cargar el archivo CSV con las coordenadas de los municipios
 @st.cache_data
 def load_municipios_data():
-    url = "https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/puntos_municipios.csv"
+    url = "https://raw.githubusercontent.com/DarthKar/APLICACIONES-lll/refs/heads/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
     municipios = pd.read_csv(url)
-    # Convertir la columna 'Geo Municipio' a geometrías
-    municipios['geometry'] = municipios['Geo Municipio'].apply(lambda geom: Point(geom.replace('POINT (', '').replace(')', '').split()))
+    # Convertir las columnas 'LATITUD' y 'LONGITUD' a geometrías
+    municipios['geometry'] = municipios.apply(lambda row: Point(row['LONGITUD'], row['LATITUD']), axis=1)
     return gpd.GeoDataFrame(municipios, geometry='geometry')
 
 municipios = load_municipios_data()
