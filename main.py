@@ -80,17 +80,18 @@ def mapa_municipios(gdf, df, col_municipio, col_volumen):
 
 # Ejecución de análisis
 try:
+    # Análisis de frecuencia de especies
     especies_frecuencia = analisis_especies_frecuencia(df, columnas["ESPECIE"])
     st.subheader("Especies más comunes a nivel nacional (por frecuencia)")
     st.write(especies_frecuencia.head(10))
     grafico_barras(especies_frecuencia.head(10), 'Frecuencia', 'Especie')
 
-    # Mapa de calor
+    # Mapa de calor por departamento
     pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], aggfunc='sum', fill_value=0)
     st.subheader("Mapa de calor: Distribución de volúmenes por departamento")
     mapa_calor(pivot_table, 'Departamento', 'Volumen (m³)')
 
-    # Mapa de municipios
+    # Mapa de municipios con mayor movilización de madera
     st.subheader("Mapa de municipios con mayor movilización de madera")
     mapa_municipios(gdf, df, columnas["MUNICIPIO"], columnas["VOLUMEN M3"])
 
