@@ -68,7 +68,11 @@ def mapa_municipios(gdf, df, col_municipio, col_volumen):
 
     # Añadir los municipios al mapa
     for _, municipio in gdf_top_municipios.iterrows():
-        folium.GeoJson(municipio.geometry, name=municipio['NOMBRE_MPI']).add_to(m)
+        folium.GeoJson(
+            municipio.geometry,
+            name=municipio['NOMBRE_MPI'],
+            style_function=lambda x: {'fillColor': 'blue', 'color': 'black', 'weight': 2, 'fillOpacity': 0.5}
+        ).add_to(m)
 
     folium_static(m)
 
