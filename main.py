@@ -7,7 +7,7 @@ import seaborn as sns
 # Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
 
-# Cargar el dataset desde GitHub
+# Cargar el dataset principal desde GitHub
 @st.cache_data
 def load_data():
     url = "https://raw.githubusercontent.com/DarthKar/APLICACIONES-lll/refs/heads/main/Base_de_datos_relacionada_con_madera_movilizada_proveniente_de_Plantaciones_Forestales_Comerciales_20250217.csv"
@@ -22,6 +22,14 @@ def load_geojson():
     return gpd.read_file(url)
 
 gdf = load_geojson()
+
+# Cargar el archivo CSV con las coordenadas de los municipios
+@st.cache_data
+def load_municipios_data():
+    url = "https://raw.githubusercontent.com/DarthKar/APLICACIONES-lll/refs/heads/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
+    return pd.read_csv(url)
+
+municipios_df = load_municipios_data()
 
 # Función para generar el mapa de calor
 def generar_mapa_calor(df):
@@ -41,7 +49,7 @@ def generar_mapa_calor(df):
         fig, ax = plt.subplots(figsize=(10, 8))
 
         # Graficar el mapa de calor
-        df_geo.plot(column='VOLUMEN M3', cmap='viridis', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+        df_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
 
         # Establecer el título
         ax.set_title("Distribución de volúmenes de madera por departamento", fontsize=16)
@@ -135,18 +143,39 @@ def especies_menor_volumen(df):
         st.error(f"Error al identificar especies con menor volumen: {e}")
 
 # Función para visualizar los municipios con mayor movilización de madera
-def mapa_municipios_mayor_movilizacion(df):
+def mapa_municipios_mayor_movilizacion(df, municipios_df):
     """
     Visualiza en un mapa los diez municipios con mayor movilización de madera.
     """
     try:
-        top_municipios = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().nlargest(10).reset_index()
-        top_municipios_geo = gdf.merge(top_municipios, left_on='NOMBRE_MPI', right_on='MUNICIPIO')
+        # Calcular el volumen total por municipio
+        volumen_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
 
+        # Identificar los 10 municipios con mayor volumen
+        top_municipios = volumen_municipio.nlargest(10, 'VOLUMEN M3')
+
+        # Unir con las coordenadas de los municipios
+        top_municipios_coords = top_municipios.merge(municipios_df, left_on='MUNICIPIO', right_on='NOM_MPIO')
+
+        # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
-        top_municipios_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+
+        # Graficar los municipios
+        ax.scatter(top_municipios_coords['LONGITUD'], top_municipios_coords['LATITUD'],
+                   c=top_municipios_coords['VOLUMEN M3'], cmap='OrRd', s=100, edgecolor='k', linewidth=1)
+
+        # Añadir etiquetas a los municipios
+        for _, row in top_municipios_coords.iterrows():
+            ax.text(row['LONGITUD'], row['LATITUD'], row['NOM_MPIO'], fontsize=9, ha='right')
+
+        # Establecer el título y las etiquetas
         ax.set_title("Municipios con Mayor Movilización de Madera", fontsize=16)
+        ax.set_xlabel("Longitud")
+        ax.set_ylabel("Latitud")
+
+        # Mostrar el mapa en Streamlit
         st.pyplot(fig)
+
     except Exception as e:
         st.error(f"Error al generar el mapa de municipios: {e}")
 
@@ -180,7 +209,7 @@ try:
 
     # Mapa de municipios con mayor movilización de madera
     st.subheader("Municipios con Mayor Movilización de Madera")
-    mapa_municipios_mayor_movilizacion(df)
+    mapa_municipios_mayor_movilizacion(df, municipios_df)
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
