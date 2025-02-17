@@ -100,19 +100,36 @@ def grafico_volumen_especies(df):
         st.error(f"Error al generar el gráfico de volúmenes por especie: {e}")
 
 # Función para analizar la evolución temporal
+# Función para analizar la evolución temporal
 def evolucion_temporal(df):
     """
     Genera un gráfico de la evolución temporal del volumen de madera por especie.
     """
     try:
-        evolucion = df.groupby(['AÑO', 'ESPECIE'])['VOLUMEN M3'].sum().unstack()
+        # Obtener la lista de especies disponibles
+        especies = df['ESPECIE'].unique()
+
+        # Crear un selector para elegir la especie
+        especie_seleccionada = st.selectbox('Selecciona la especie para analizar su evolución temporal', especies)
+
+        # Filtrar el DataFrame por la especie seleccionada
+        df_filtrado = df[df['ESPECIE'] == especie_seleccionada]
+
+        # Agrupar y calcular el volumen por año y especie
+        evolucion = df_filtrado.groupby(['AÑO', 'ESPECIE'])['VOLUMEN M3'].sum().unstack()
+
+        # Crear el gráfico
         fig, ax = plt.subplots(figsize=(12, 8))
         evolucion.plot(ax=ax)
         ax.set(xlabel='Año', ylabel='Volumen (m³)')
-        ax.set_title('Evolución Temporal del Volumen de Madera por Especie', fontsize=16)
+        ax.set_title(f'Evolución Temporal del Volumen de Madera para la Especie {especie_seleccionada}', fontsize=16)
+        
+        # Mostrar el gráfico en Streamlit
         st.pyplot(fig)
+
     except Exception as e:
         st.error(f"Error al generar el gráfico de evolución temporal: {e}")
+
 
 # Función para identificar outliers
 def analisis_outliers(df):
