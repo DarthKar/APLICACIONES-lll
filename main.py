@@ -29,24 +29,13 @@ def mapa_calor(df):
     Genera un mapa de calor de volúmenes de madera por departamento.
     """
     try:
-        # Calcular el volumen total por departamento
         vol_por_dpto = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
-
-        # Unir los datos de volumen con el GeoDataFrame de Colombia
         df_geo = gdf.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
 
-        # Crear la figura y el eje
         fig, ax = plt.subplots(figsize=(10, 8))
-
-        # Graficar el mapa de calor
         df_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
-
-        # Establecer el título
         ax.set_title("Distribución de volúmenes de madera por departamento", fontsize=16)
-
-        # Mostrar el mapa en Streamlit
         st.pyplot(fig)
-
     except Exception as e:
         st.error(f"Error al generar el mapa de calor: {e}")
 
@@ -132,6 +121,22 @@ def especies_menor_volumen(df):
     except Exception as e:
         st.error(f"Error al identificar especies con menor volumen: {e}")
 
+# Función para visualizar los municipios con mayor movilización de madera
+def mapa_municipios_mayor_movilizacion(df):
+    """
+    Visualiza en un mapa los diez municipios con mayor movilización de madera.
+    """
+    try:
+        top_municipios = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().nlargest(10).reset_index()
+        top_municipios_geo = gdf.merge(top_municipios, left_on='NOMBRE_MPI', right_on='MUNICIPIO')
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        top_municipios_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+        ax.set_title("Municipios con Mayor Movilización de Madera", fontsize=16)
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Error al generar el mapa de municipios: {e}")
+
 # Ejecución de análisis
 try:
     # Mapa de calor por departamento
@@ -156,7 +161,13 @@ try:
 
     # Volumen total por municipio
     volumen_por_municipio(df)
+
+    # Especies con menor volumen movilizado
     especies_menor_volumen(df)
+
+    # Mapa de municipios con mayor movilización de madera
+    st.subheader("Municipios con Mayor Movilización de Madera")
+    mapa_municipios_mayor_movilizacion(df)
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
