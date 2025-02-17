@@ -135,17 +135,38 @@ def evolucion_temporal(df):
     except Exception as e:
         st.error(f"Error al generar el gráfico de evolución temporal: {e}")
 
+# Función para realizar análisis estadístico de outliers
 def analisis_outliers(df):
     """
-    Genera un boxplot para identificar outliers en los volúmenes de madera.
+    Realiza un análisis estadístico para identificar outliers en los volúmenes de madera.
     """
     try:
+        # Calcular los cuartiles
+        Q1 = df['VOLUMEN M3'].quantile(0.25)
+        Q3 = df['VOLUMEN M3'].quantile(0.75)
+
+        # Calcular el rango intercuartílico (IQR)
+        IQR = Q3 - Q1
+
+        # Calcular los límites inferior y superior para identificar outliers
+        limite_inferior = Q1 - 1.5 * IQR
+        limite_superior = Q3 + 1.5 * IQR
+
+        # Filtrar los outliers
+        outliers = df[(df['VOLUMEN M3'] < limite_inferior) | (df['VOLUMEN M3'] > limite_superior)]
+
+        # Mostrar los outliers en Streamlit
+        st.subheader("Outliers en los volúmenes de madera")
+        st.write(outliers)
+
+        # Graficar los outliers usando un boxplot
         fig, ax = plt.subplots(figsize=(10, 6))
         sns.boxplot(x=df['VOLUMEN M3'], ax=ax)
-        ax.set_title('Distribución de Volúmenes de Madera', fontsize=16)
+        ax.set_title('Distribución de Volúmenes de Madera con Outliers', fontsize=16)
         st.pyplot(fig)
+
     except Exception as e:
-        st.error(f"Error al generar el análisis de outliers: {e}")
+        st.error(f"Error al realizar el análisis de outliers: {e}")
 
 # Función para calcular el volumen por municipio
 def volumen_por_municipio(df):
@@ -175,9 +196,6 @@ def especies_menor_volumen(df):
 def generar_mapa_top_10_municipios(df):
     """
     Genera un mapa de Colombia con los diez municipios con mayor movilización de madera.
-
-    Args:
-    df (pd.DataFrame): DataFrame con los datos de madera.
     """
     try:
         # Cargar el dataset de coordenadas de los municipios
@@ -199,84 +217,34 @@ def generar_mapa_top_10_municipios(df):
             df_coordenadas,
             left_on='MUNICIPIO',
             right_on='NOM_MPIO',
-            how='inner'
+            how='left'
         )
 
-        # Crear un GeoDataFrame con los municipios y sus coordenadas
-        gdf = gpd.GeoDataFrame(
-            top_10_municipios,
-            geometry=gpd.points_from_xy(top_10_municipios['LONGITUD'], top_10_municipios['LATITUD'])
-        )
+        # Crear un GeoDataFrame de los municipios top 10
+        top_10_geo = gpd.GeoDataFrame(top_10_municipios, geometry=gpd.GeoSeries.from_wkt(top_10_municipios['Geo Municipio']))
 
-        # Cargar el archivo GeoJSON de Colombia
-        colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
-
-        # Crear la figura y el eje
+        # Mostrar el mapa
         fig, ax = plt.subplots(figsize=(10, 8))
-
-        # Graficar el mapa base de Colombia
-        colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
-
-        # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
-        gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k')
-
-        # Añadir etiquetas con el nombre del municipio (sin el volumen)
-        for idx, row in gdf.iterrows():
-            ax.text(
-                x=row['LONGITUD'],
-                y=row['LATITUD'],
-                s=row['MUNICIPIO'].title(),
-                fontsize=6,
-                ha='center',
-                va='center',
-                color='black',
-                bbox=dict(facecolor='white', alpha=0.0, edgecolor='none')
-            )
-
-        # Establecer el título
-        ax.set_title("Top 10 Municipios con Mayor Movilización de Madera")
-
-        # Mostrar el gráfico en Streamlit
+        colombia.plot(ax=ax, color='lightgrey')
+        top_10_geo.plot(ax=ax, color='red', markersize=50)
+        ax.set_title("Top 10 Municipios con Mayor Movilización de Madera", fontsize=16)
         st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"Error al generar el mapa de los municipios: {e}")
+        st.error(f"Error al generar el mapa: {e}")
 
+# Interfaz en Streamlit
+pagina = st.sidebar.selectbox("Selecciona una opción", ["Mapa de calor", "Análisis por especie", "Análisis de outliers", "Volumen por municipio", "Especies con menor volumen", "Municipios con mayor volumen"])
 
-
-# Ejecución de análisis
-try:
-    # Mapa de calor por departamento
-    st.subheader("Mapa de Calor: Distribución de Volúmenes por Departamento")
+if pagina == "Mapa de calor":
     generar_mapa_calor(df)
-
-    # Gráfico de especies más comunes
-    st.subheader("Especies más comunes a nivel nacional (por frecuencia)")
+elif pagina == "Análisis por especie":
     grafico_especies(df)
-
-    # Gráfico de especies con mayor volumen movilizado
-    st.subheader("Especies con Mayor Volumen Movilizado")
-    grafico_volumen_especies(df)
-
-    # Evolución temporal del volumen de madera
-    st.subheader("Evolución Temporal del Volumen de Madera por Especie")
-    evolucion_temporal(df)
-
-    # Análisis de outliers
-    st.subheader("Análisis de Outliers en Volúmenes de Madera")
+elif pagina == "Análisis de outliers":
     analisis_outliers(df)
-
-    # Volumen total por municipio
+elif pagina == "Volumen por municipio":
     volumen_por_municipio(df)
-
-    # Especies con menor volumen movilizado
+elif pagina == "Especies con menor volumen":
     especies_menor_volumen(df)
-
-    # Mapa de municipios con mayor movilización de madera
-    st.subheader("Municipios con Mayor Movilización de Madera")
+elif pagina == "Municipios con mayor volumen":
     generar_mapa_top_10_municipios(df)
-
-except KeyError as e:
-    st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
-except Exception as e:
-    st.error(f"Error inesperado: {e}")
