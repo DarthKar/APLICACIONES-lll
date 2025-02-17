@@ -254,7 +254,7 @@ try:
 
     # Mapa de municipios con mayor movilización de madera
     st.subheader("Municipios con Mayor Movilización de Madera")
-    generar_mapa_top_10_municipios(df):
+    generar_mapa_top_10_municipios(df)
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
