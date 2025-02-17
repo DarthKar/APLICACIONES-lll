@@ -17,7 +17,7 @@ def load_data():
 
 df = load_data()
 
-# Cargar el archivo GeoJSON de los municipios de Colombia
+# Cargar el archivo GeoJSON de los departamentos de Colombia
 @st.cache_data
 def load_geojson():
     url = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/3aadedf47badbdac823b00dbe259f6bc6d9e1899/colombia.geo.json"
@@ -49,32 +49,30 @@ def grafico_barras(data, xlabel, ylabel):
     ax.set_title(f'Top 10 {ylabel}', fontsize=16)
     st.pyplot(fig)
 
-def mapa_calor(data, xlabel, ylabel):
-    fig, ax = plt.subplots(figsize=(12, 8))
-    sns.heatmap(data, cmap="YlGnBu", ax=ax, annot=True, fmt=".1f", linewidths=.5, cbar_kws={'label': 'Volumen (m³)'})
-    ax.set(xlabel=xlabel, ylabel=ylabel)
-    ax.set_title(f'Mapa de Calor: Distribución de Volúmenes por {ylabel}', fontsize=16)
-    plt.xticks(rotation=45, ha='right')
-    plt.yticks(rotation=0)
-    st.pyplot(fig)
+def mapa_calor_departamentos(gdf, df, col_departamento, col_volumen):
+    # Calcular el volumen total por departamento
+    volumen_por_departamento = df.groupby(col_departamento)[col_volumen].sum()
 
-def mapa_municipios(gdf, df, col_municipio, col_volumen):
-    # Obtener los 10 municipios con mayor volumen
-    top_municipios = df.groupby(col_municipio)[col_volumen].sum().sort_values(ascending=False).head(10)
-
-    # Filtrar el GeoDataFrame para obtener solo los municipios en la lista top
-    gdf_top_municipios = gdf[gdf['NOMBRE_MPI'].isin(top_municipios.index)]
+    # Unir el GeoDataFrame con los datos de volumen
+    gdf = gdf.set_index('DPTO_CCDGO')  # Asegúrate de que 'DPTO_CCDGO' es la columna correcta en tu GeoDataFrame
+    gdf['VOLUMEN M3'] = volumen_por_departamento
+    gdf['VOLUMEN M3'] = gdf['VOLUMEN M3'].fillna(0)
 
     # Crear el mapa con folium
     m = folium.Map(location=[4.570868, -74.297333], zoom_start=5)
 
-    # Añadir los municipios al mapa
-    for _, municipio in gdf_top_municipios.iterrows():
-        folium.GeoJson(
-            municipio.geometry,
-            name=municipio['NOMBRE_MPI'],
-            style_function=lambda x: {'fillColor': 'blue', 'color': 'black', 'weight': 2, 'fillOpacity': 0.5}
-        ).add_to(m)
+    # Añadir los departamentos al mapa con un mapa de calor
+    folium.Choropleth(
+        geo_data=gdf,
+        name="choropleth",
+        data=gdf,
+        columns=["DPTO_CCDGO", "VOLUMEN M3"],
+        key_on="feature.properties.DPTO_CCDGO",
+        fill_color="YlGnBu",
+        fill_opacity=0.7,
+        line_opacity=0.5,
+        legend_name="Volumen (m³)"
+    ).add_to(m)
 
     folium_static(m)
 
@@ -87,13 +85,8 @@ try:
     grafico_barras(especies_frecuencia.head(10), 'Frecuencia', 'Especie')
 
     # Mapa de calor por departamento
-    pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], aggfunc='sum', fill_value=0)
     st.subheader("Mapa de calor: Distribución de volúmenes por departamento")
-    mapa_calor(pivot_table, 'Departamento', 'Volumen (m³)')
-
-    # Mapa de municipios con mayor movilización de madera
-    st.subheader("Mapa de municipios con mayor movilización de madera")
-    mapa_municipios(gdf, df, columnas["MUNICIPIO"], columnas["VOLUMEN M3"])
+    mapa_calor_departamentos(gdf, df, columnas["DPTO"], columnas["VOLUMEN M3"])
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
