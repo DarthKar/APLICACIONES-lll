@@ -1,8 +1,5 @@
 import streamlit as st
 import pandas as pd
-import geopandas as gpd
-import folium
-from streamlit_folium import folium_static
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -17,13 +14,13 @@ def load_data():
 
 df = load_data()
 
-# Cargar el archivo GeoJSON de los municipios de Colombia
-@st.cache_data
-def load_geojson():
-    url = "https://raw.githubusercontent.com/finiterank/mapa-colombia-js/refs/heads/master/colombia-municipios.json"
-    return gpd.read_file(url)
+# Mostrar información general del dataset
+st.subheader("Vista previa del dataset")
+st.write(df.head())
 
-gdf = load_geojson()
+st.subheader("Información del dataset")
+buffer = df.info(memory_usage='deep')
+st.text(buffer)
 
 # Definición de columnas
 columnas = {
@@ -58,26 +55,6 @@ def mapa_calor(data, xlabel, ylabel):
     plt.yticks(rotation=0)
     st.pyplot(fig)
 
-def mapa_municipios(gdf, df, col_municipio, col_volumen):
-    # Obtener los 10 municipios con mayor volumen
-    top_municipios = df.groupby(col_municipio)[col_volumen].sum().sort_values(ascending=False).head(10)
-
-    # Filtrar el GeoDataFrame para obtener solo los municipios en la lista top
-    gdf_top_municipios = gdf[gdf['NOMBRE_MPI'].isin(top_municipios.index)]
-
-    # Crear el mapa con folium
-    m = folium.Map(location=[4.570868, -74.297333], zoom_start=5)
-
-    # Añadir los municipios al mapa
-    for _, municipio in gdf_top_municipios.iterrows():
-        folium.GeoJson(
-            municipio.geometry,
-            name=municipio['NOMBRE_MPI'],
-            style_function=lambda x: {'fillColor': 'blue', 'color': 'black', 'weight': 2, 'fillOpacity': 0.5}
-        ).add_to(m)
-
-    folium_static(m)
-
 def grafico_lineas(data, x, y, hue, xlabel, ylabel):
     fig, ax = plt.subplots(figsize=(12, 6))
     sns.lineplot(data=data, x=x, y=y, hue=hue, ax=ax, palette="husl")
@@ -96,18 +73,6 @@ try:
     pivot_table = df.pivot_table(values=columnas["VOLUMEN M3"], index=columnas["DPTO"], aggfunc='sum', fill_value=0)
     st.subheader("Mapa de calor: Distribución de volúmenes por departamento")
     mapa_calor(pivot_table, 'Departamento', 'Volumen (m³)')
-    # Mapa de municipios
-    st.subheader("Mapa de municipios con mayor movilización de madera")
-    mapa_municipios(gdf, df, columnas["MUNICIPIO"], columnas["VOLUMEN M3"])
-
-    volumen_por_municipio = df.groupby(columnas["MUNICIPIO"])[columnas["VOLUMEN M3"]].sum().sort_values(ascending=False)
-    st.subheader("Municipios con mayor movilización de madera")
-    st.write(volumen_por_municipio.head(10))
-
-    df[columnas["AÑO"]] = pd.to_datetime(df[columnas["AÑO"]], format='%Y')
-    evolucion_temporal = df.groupby([df[columnas["AÑO"]].dt.year, columnas["ESPECIE"]])[columnas["VOLUMEN M3"]].sum().reset_index()
-    st.subheader("Evolución temporal del volumen movilizado por especie")
-    grafico_lineas(evolucion_temporal, evolucion_temporal.columns[0], columnas["VOLUMEN M3"], columnas["ESPECIE"], 'Año', 'Volumen (m³)')
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
