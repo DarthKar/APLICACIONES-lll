@@ -6,7 +6,6 @@ from streamlit_folium import folium_static
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Configuración de la aplicación
 st.title("Análisis de Madera Movilizada en Colombia")
 
 # Cargar el dataset desde GitHub
