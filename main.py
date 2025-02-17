@@ -49,3 +49,7 @@ if missing_values.sum() > 0:
 else:
     st.write("No hay valores nulos en el dataset. No es necesario interpolar.")
 
+
+st.subheader("Nombres de las columnas en el dataset")
+st.write(df.columns)
+
