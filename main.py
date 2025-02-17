@@ -17,10 +17,10 @@ def load_data():
 
 df = load_data()
 
-# Cargar el archivo GeoJSON de los municipios de Colombia
+# Cargar el archivo GeoJSON de los departamentos de Colombia
 @st.cache_data
 def load_geojson():
-    url = "https://raw.githubusercontent.com/finiterank/mapa-colombia-js/refs/heads/master/colombia-municipios.json"
+    url = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json"
     return gpd.read_file(url)
 
 gdf = load_geojson()
@@ -58,21 +58,21 @@ def mapa_calor(data, xlabel, ylabel):
     plt.yticks(rotation=0)
     st.pyplot(fig)
 
-def mapa_municipios(gdf, df, col_municipio, col_volumen):
-    # Obtener los 10 municipios con mayor volumen
-    top_municipios = df.groupby(col_municipio)[col_volumen].sum().sort_values(ascending=False).head(10)
+def mapa_departamentos(gdf, df, col_departamento, col_volumen):
+    # Obtener los 10 departamentos con mayor volumen
+    top_departamentos = df.groupby(col_departamento)[col_volumen].sum().sort_values(ascending=False).head(10)
 
-    # Filtrar el GeoDataFrame para obtener solo los municipios en la lista top
-    gdf_top_municipios = gdf[gdf['NOMBRE_MPI'].isin(top_municipios.index)]
+    # Filtrar el GeoDataFrame para obtener solo los departamentos en la lista top
+    gdf_top_departamentos = gdf[gdf['NOMBRE_DPT'].isin(top_departamentos.index)]
 
     # Crear el mapa con folium
     m = folium.Map(location=[4.570868, -74.297333], zoom_start=5)
 
-    # Añadir los municipios al mapa
-    for _, municipio in gdf_top_municipios.iterrows():
+    # Añadir los departamentos al mapa
+    for _, departamento in gdf_top_departamentos.iterrows():
         folium.GeoJson(
-            municipio.geometry,
-            name=municipio['NOMBRE_MPI'],
+            departamento.geometry,
+            name=departamento['NOMBRE_DPT'],
             style_function=lambda x: {'fillColor': 'blue', 'color': 'black', 'weight': 2, 'fillOpacity': 0.5}
         ).add_to(m)
 
@@ -91,9 +91,9 @@ try:
     st.subheader("Mapa de calor: Distribución de volúmenes por departamento")
     mapa_calor(pivot_table, 'Departamento', 'Volumen (m³)')
 
-    # Mapa de municipios con mayor movilización de madera
-    st.subheader("Mapa de municipios con mayor movilización de madera")
-    mapa_municipios(gdf, df, columnas["MUNICIPIO"], columnas["VOLUMEN M3"])
+    # Mapa de departamentos con mayor movilización de madera
+    st.subheader("Mapa de departamentos con mayor movilización de madera")
+    mapa_departamentos(gdf, df, columnas["DPTO"], columnas["VOLUMEN M3"])
 
 except KeyError as e:
     st.error(f"Columna no encontrada: {e}. Verifique los nombres de las columnas.")
